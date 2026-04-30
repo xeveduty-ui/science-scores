@@ -1404,8 +1404,7 @@ function downloadCSV() {
 
   // CSV文字列生成（BOM付きでExcel対応）
   const bom = '﻿';
-  const csv = bom + [headers, ...rows].map(r=>r.join(',')).join('
-');
+  const csv = bom + [headers, ...rows].map(r=>r.join(',')).join('\n');
 
   // ダウンロード
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
