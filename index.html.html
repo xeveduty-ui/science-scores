@@ -1188,7 +1188,7 @@ function showStudentModal(uid) {
     const tMax = Math.max(...topicStats.map(t=>t.avg),1);
     const rows = topicStats.map(t=>{
       const pct = Math.round(t.avg/tMax*100);
-      const color = pct<50?'var(--danger)':pct<75?'var(--accent2)":'var(--accent3)';
+      const color = pct<50?'var(--danger)':pct<75?'var(--accent2)':'var(--accent3)';
       return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
         <div style="min-width:130px;font-size:11px;font-weight:700">${t.name}</div>
         <div style="flex:1;height:16px;background:var(--surface2);border-radius:4px;overflow:hidden">
