@@ -387,7 +387,7 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
       <div class="card-title">基本情報</div>
       <div class="form-row">
         <div class="mfield"><label>実施日</label><input type="date" id="dateInput"></div>
-        <div class="mfield"><label>テスト名（任意）</label><input type="text" id="testNameInput" placeholder="例：第1回模擬試験"></div>
+        <div class="mfield"><label>テスト名（必須）</label><input type="text" id="testNameInput" placeholder="例：第1回模擬試験"></div>
       </div>
     </div>
     <div class="card">
@@ -513,11 +513,11 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
 //  定数
 // ══════════════════════════════
 const SECTIONS = [
-  { key:'q1', num:'大問１', name:'小問集合', color:'var(--c1)', topics:['総合（小問集合）','地学・生物・化学・物理 混合','その他'] },
-  { key:'q2', num:'大問２', name:'地学',     color:'var(--c2)', topics:['地層・岩石','地震','火山','天気・気象','太陽・月・星','宇宙・天体','その他'] },
-  { key:'q3', num:'大問３', name:'生物',     color:'var(--c3)', topics:['植物のつくりとはたらき','動物のからだ','細胞・生命活動','遺伝・進化','生態系・食物連鎖','その他'] },
-  { key:'q4', num:'大問４', name:'化学',     color:'var(--c4)', topics:['物質の性質・状態変化','化学変化・化学反応式','原子・分子・イオン','酸・アルカリ・中和','電気分解・電池','その他'] },
-  { key:'q5', num:'大問５', name:'物理',     color:'var(--c5)', topics:['光・音','力・圧力・浮力','電流・電圧・抵抗','磁界・電磁誘導','運動とエネルギー','その他'] },
+  { key:'q1', num:'大問１', name:'小問集合', color:'var(--c1)', topics:[] },
+  { key:'q2', num:'大問２', name:'地学',     color:'var(--c2)', topics:['地震','火山','岩石','地層','天気図','水蒸気・湿度・雲のでき方','前線','季節風','気団・季節','宇宙のつくり','太陽の動き','年周運動（1年間の動き）','月の動き','金星','その他'] },
+  { key:'q3', num:'大問３', name:'生物',     color:'var(--c3)', topics:['植物の分類','動物の分類','光合成','蒸散・維管束','消化・吸収','血液','循環・臓器のはたらき','刺激と反応','細胞分裂','発生','遺伝','進化','その他'] },
+  { key:'q4', num:'大問４', name:'化学',     color:'var(--c4)', topics:['固体の分類','密度','気体の性質','水溶液・溶解度・再結晶','状態変化・蒸留','化学変化','分解','酸化・還元','質量保存の法則','電気分解（イオン）','電池','酸・アルカリ','中和','その他'] },
+  { key:'q5', num:'大問５', name:'物理',     color:'var(--c5)', topics:['光','音','力（バネ）','電流','発熱量（水の温度上昇）','磁界（右ネジやフレミング）','モーター','電磁誘導','静電気','浮力・水圧','力の合成分解','物体の運動','力学的エネルギー','仕事','その他'] },
 ];
 
 // ══════════════════════════════
@@ -637,13 +637,14 @@ function buildSectionsGrid() {
           <div class="section-num" style="color:${s.color}">${s.num}</div>
           <div class="section-name" style="color:${s.color}">${s.name}</div>
         </div>
+        ${s.key === 'q1' ? '<div class="topic-row"></div>' : `
         <div class="topic-row">
           <select class="topic-select" id="topic_${s.key}" onchange="onTopicChange('${s.key}')">
             <option value="">出題内容を選択</option>
             ${s.topics.map(t=>`<option value="${t}">${t}</option>`).join('')}
           </select>
           <input class="topic-input" id="topicCustom_${s.key}" placeholder="内容を入力…" type="text">
-        </div>
+        </div>`}
         <div class="score-wrap">
           <input class="section-input" type="number" id="inp_${s.key}" placeholder="—" min="0" oninput="updateTotal()" style="border-color:${s.color}55">
           <span class="score-unit">点</span>
@@ -676,6 +677,7 @@ async function addRecord() {
   const date     = document.getElementById('dateInput').value;
   const testName = document.getElementById('testNameInput').value.trim();
   if (!date) return alert('日付を選んでください');
+  if (!testName) return alert('テスト名を入力してください');
 
   const scores={}, topics={};
   for (const s of SECTIONS) {
@@ -690,7 +692,7 @@ async function addRecord() {
   try {
     await addDoc(collection(db,'records'), {
       uid: u.uid, display: u.display, email: u.email,
-      date, testName: testName||'テスト', scores, topics, total,
+      date, testName: testName, scores, topics, total,
       createdAt: Date.now()
     });
     showToast('✓ 記録しました！');
