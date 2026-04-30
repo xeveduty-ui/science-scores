@@ -882,6 +882,40 @@ function renderAnalysis(recs) {
     </div>`;
   }).join('');
 
+  // 出題内容別分析
+  const topicDetailCards = SECTIONS.filter(s=>s.key!=='q1').map(s=>{
+    const topicMap = {};
+    recs.forEach(r=>{
+      const topic = r.topics&&r.topics[s.key];
+      const score = r.scores&&r.scores[s.key];
+      if (!topic||score==null) return;
+      if (!topicMap[topic]) topicMap[topic]={scores:[]};
+      topicMap[topic].scores.push(score);
+    });
+    const topicStats = Object.entries(topicMap)
+      .map(([name,d])=>({ name, avg:Math.round(d.scores.reduce((a,b)=>a+b,0)/d.scores.length*10)/10, count:d.scores.length }))
+      .sort((a,b)=>a.avg-b.avg);
+    if (!topicStats.length) return '';
+    const tMax = Math.max(...topicStats.map(t=>t.avg),1);
+    const rows = topicStats.map(t=>{
+      const pct = Math.round(t.avg/tMax*100);
+      const color = pct<50?'var(--danger)':pct<75?'var(--accent2)':'var(--accent3)';
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="min-width:160px;font-size:12px;font-weight:700">${t.name}</div>
+        <div style="flex:1;height:18px;background:var(--surface2);border-radius:6px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px">
+            <span style="font-size:11px;font-weight:700;color:#0d1117">${t.avg}点</span>
+          </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-muted);min-width:28px;text-align:right">${t.count}回</div>
+      </div>`;
+    }).join('');
+    return `<div class="card">
+      <div class="card-title" style="--accent:${s.color}">${s.num}　${s.name}　出題内容別平均点</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
   result.innerHTML=`
     <div class="card">
       <div class="card-title">${window.__currentUser.display}さんの大問別レーダー</div>
@@ -895,7 +929,8 @@ function renderAnalysis(recs) {
         <div class="stat-box"><div class="stat-val" style="color:var(--danger)">${allMin}</div><div class="stat-label">最低合計点</div></div>
       </div>
       ${cards}
-    </div>`;
+    </div>
+    ${topicDetailCards}`;
 }
 
 function buildRadar(stats, maxVal) {
