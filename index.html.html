@@ -504,8 +504,16 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
 
   <!-- 生徒一覧 -->
   <div class="teacher-page" id="tpage-students" style="display:none">
+    <div class="t-card" style="padding:14px 20px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:1px">校舎を選択</div>
+        <select id="schoolFilterStudents" onchange="onSchoolFilterStudentsChange()" style="flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;outline:none">
+          <option value="all">すべての校舎</option>
+        </select>
+      </div>
+    </div>
     <div class="t-card">
-      <div class="t-card-title">生徒一覧（平均点順）</div>
+      <div class="t-card-title" id="studentListTitle">生徒一覧（平均点順）</div>
       <div id="studentList"></div>
     </div>
   </div>
@@ -1167,8 +1175,35 @@ function renderTeacherWeakness() {
 // ══════════════════════════════
 //  生徒一覧
 // ══════════════════════════════
+function onSchoolFilterStudentsChange() {
+  const sel = document.getElementById('schoolFilterStudents');
+  const school = sel ? sel.value : 'all';
+  const allUsers = window.__allUsers || [];
+  const allRecs  = window.__allRecords || [];
+  const filteredUsers = school==='all' ? allUsers : allUsers.filter(u=>u.school===school);
+  const uids = filteredUsers.map(u=>u.uid);
+  const filteredRecs  = school==='all' ? allRecs  : allRecs.filter(r=>uids.includes(r.uid));
+  window.__filteredStudentUsers = filteredUsers;
+  window.__filteredStudentRecs  = filteredRecs;
+  const title = document.getElementById('studentListTitle');
+  if (title) title.textContent = (school==='all' ? '全校舎' : school) + ' 生徒一覧（平均点順）';
+  renderStudentList();
+}
+
+function updateSchoolFilterStudents() {
+  const allUsers = window.__allUsers || [];
+  const schools = [...new Set(allUsers.map(u=>u.school).filter(Boolean))].sort();
+  const sel = document.getElementById('schoolFilterStudents');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="all">すべての校舎</option>' +
+    schools.map(s=>`<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('');
+}
+
 function renderStudentList() {
-  const { recs, users } = getFilteredData();
+  updateSchoolFilterStudents();
+  const recs  = window.__filteredStudentRecs  || window.__allRecords || [];
+  const users = window.__filteredStudentUsers || window.__allUsers   || [];
 
   const byUid = {};
   recs.forEach(r=>{ if (!byUid[r.uid]) byUid[r.uid]=[]; byUid[r.uid].push(r); });
