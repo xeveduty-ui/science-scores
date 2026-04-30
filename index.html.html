@@ -686,7 +686,9 @@ async function addRecord() {
     const raw=document.getElementById('inp_'+s.key).value, v=parseInt(raw);
     if (raw===''||isNaN(v)) return alert(`${s.num}（${s.name}）の点数を入力してください`);
     if (v<0) return alert(`${s.num}の点数は0以上で入力してください`);
-    scores[s.key]=v; topics[s.key]=getTopicValue(s.key);
+    const topic=getTopicValue(s.key);
+    if (s.key !== 'q1' && !topic) return alert(`${s.num}（${s.name}）の出題内容を選択してください`);
+    scores[s.key]=v; topics[s.key]=topic;
   }
   const total=Object.values(scores).reduce((a,b)=>a+b,0);
   const u = window.__currentUser;
