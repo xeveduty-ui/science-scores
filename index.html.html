@@ -463,6 +463,14 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
 
   <!-- 校舎概要 -->
   <div class="teacher-page active" id="tpage-overview">
+    <div class="t-card" style="padding:14px 20px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:1px">校舎を選択</div>
+        <select id="schoolFilter" onchange="onSchoolFilterChange()" style="flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;outline:none">
+          <option value="all">すべての校舎</option>
+        </select>
+      </div>
+    </div>
     <div class="t-card">
       <div class="t-card-title">校舎全体統計</div>
       <div class="class-stats-grid" id="classStatsGrid">
@@ -989,11 +997,48 @@ function switchTeacherTab(tab, el) {
 // ══════════════════════════════
 //  校舎概要
 // ══════════════════════════════
+function onSchoolFilterChange() {
+  renderTeacherOverview();
+  renderTeacherWeakness();
+  renderStudentList();
+}
+
+function getSelectedSchool() {
+  const sel = document.getElementById('schoolFilter');
+  return sel ? sel.value : 'all';
+}
+
+function getFilteredData() {
+  const school = getSelectedSchool();
+  const allRecs  = window.__allRecords || [];
+  const allUsers = window.__allUsers   || [];
+  if (school === 'all') return { recs: allRecs, users: allUsers };
+  const uids = allUsers.filter(u=>u.school===school).map(u=>u.uid);
+  return {
+    recs:  allRecs.filter(r=>uids.includes(r.uid)),
+    users: allUsers.filter(u=>u.school===school)
+  };
+}
+
+function updateSchoolFilter() {
+  const allUsers = window.__allUsers || [];
+  const schools = [...new Set(allUsers.map(u=>u.school).filter(Boolean))].sort();
+  const sel = document.getElementById('schoolFilter');
+  if (!sel) return;
+  const current = sel.value;
+  sel.innerHTML = '<option value="all">すべての校舎</option>' +
+    schools.map(s=>`<option value="${s}" ${s===current?'selected':''}>${s}</option>`).join('');
+}
+
 function renderTeacherOverview() {
-  const recs  = window.__allRecords || [];
-  const users = window.__allUsers   || [];
+  updateSchoolFilter();
+  const { recs, users } = getFilteredData();
   if (!recs.length) {
     document.getElementById('sectionBars').innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">まだデータがありません</div>';
+    document.getElementById('t-totalStudents').textContent = 0;
+    document.getElementById('t-totalRecords').textContent  = 0;
+    document.getElementById('t-classAvg').textContent      = '—';
+    document.getElementById('t-classMax').textContent      = '—';
     return;
   }
   const tots = recs.map(r=>r.total);
@@ -1046,7 +1091,7 @@ function renderTeacherOverview() {
 //  苦手分析
 // ══════════════════════════════
 function renderTeacherWeakness() {
-  const recs = window.__allRecords || [];
+  const { recs } = getFilteredData();
   if (!recs.length) return;
 
   // トピック別 低得点集計
@@ -1123,8 +1168,7 @@ function renderTeacherWeakness() {
 //  生徒一覧
 // ══════════════════════════════
 function renderStudentList() {
-  const recs  = window.__allRecords || [];
-  const users = window.__allUsers   || [];
+  const { recs, users } = getFilteredData();
 
   const byUid = {};
   recs.forEach(r=>{ if (!byUid[r.uid]) byUid[r.uid]=[]; byUid[r.uid].push(r); });
