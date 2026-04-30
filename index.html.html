@@ -387,7 +387,7 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
       <div class="card-title">基本情報</div>
       <div class="form-row">
         <div class="mfield"><label>実施日</label><input type="date" id="dateInput"></div>
-        <div class="mfield"><label>テスト名（必須）</label><input type="text" id="testNameInput" placeholder="例：第1回模擬試験"></div>
+        <div class="mfield"><label>テスト名（必須）</label><input type="text" id="testNameInput" placeholder="例：R5第1回北辰"></div>
       </div>
     </div>
     <div class="card">
@@ -659,7 +659,9 @@ function onTopicChange(key) {
   else { custom.classList.remove('visible'); custom.value=''; }
 }
 function getTopicValue(key) {
-  const sel=document.getElementById('topic_'+key), custom=document.getElementById('topicCustom_'+key);
+  const sel=document.getElementById('topic_'+key);
+  if (!sel) return '';
+  const custom=document.getElementById('topicCustom_'+key);
   return sel.value==='その他' ? (custom.value.trim()||'その他') : sel.value;
 }
 function updateTotal() {
