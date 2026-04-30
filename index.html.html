@@ -341,12 +341,13 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
         <input type="password" id="regPass" placeholder="6文字以上で設定" autocomplete="new-password">
       </div>
       <div class="field">
-        <label>クラスコード（先生から配布）</label>
-        <input type="text" id="regCode" placeholder="クラスコードを入力" onkeydown="if(event.key==='Enter')doRegister()">
+        <label>所属校舎</label>
+        <input type="text" id="regSchool" placeholder="例：大宮校舎">
       </div>
+
       <button class="btn-login" onclick="doRegister()">登録してはじめる →</button>
       <div class="login-msg" id="registerMsg"></div>
-      <div class="class-code-note">※ クラスコードは先生に確認してください</div>
+
     </div>
 
     <div class="login-note">
@@ -587,23 +588,23 @@ async function doRegister() {
   const { auth, db, CLASS_CODE, TEACHER_USERNAME, TEACHER_PASSWORD, toEmail, createUserWithEmailAndPassword, doc, setDoc } = fb();
   const name    = document.getElementById('regName').value.trim();
   const display = document.getElementById('regDisplay').value.trim();
+  const school  = document.getElementById('regSchool').value.trim();
   const pass    = document.getElementById('regPass').value;
-  const code    = document.getElementById('regCode').value.trim();
   const msg     = document.getElementById('registerMsg');
 
   if (!name)           return setMsg(msg,'error','ユーザー名を入力してください');
   if (!/^[a-zA-Z0-9_]+$/.test(name)) return setMsg(msg,'error','ユーザー名は半角英数字・アンダースコアのみ使えます');
   if (!display)        return setMsg(msg,'error','表示名を入力してください');
+  if (!school)         return setMsg(msg,'error','所属校舎を入力してください');
   if (pass.length < 6) return setMsg(msg,'error','パスワードは6文字以上にしてください');
-  if (code !== CLASS_CODE) return setMsg(msg,'error','クラスコードが違います');
 
   setMsg(msg,'success','登録中…');
   const email = toEmail(name);
   const role  = (name === TEACHER_USERNAME) ? 'teacher' : 'student';
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    await setDoc(doc(db,'users',cred.user.uid), { username:name, display, role, createdAt: Date.now() });
-    window.__currentUser = { uid: cred.user.uid, username:name, display, role };
+    await setDoc(doc(db,'users',cred.user.uid), { username:name, display, school, role, createdAt: Date.now() });
+    window.__currentUser = { uid: cred.user.uid, username:name, display, school, role };
     setMsg(msg,'success','登録完了！');
   } catch(e) {
     const map = { 'auth/email-already-in-use':'そのユーザー名はすでに使われています' };
@@ -706,7 +707,7 @@ function addRecord() {
   }
   const total=Object.values(scores).reduce((a,b)=>a+b,0);
   const u = window.__currentUser;
-  __pendingRecord = { uid: u.uid, display: u.display, username: u.username, date, testName, scores, topics, total, createdAt: Date.now() };
+  __pendingRecord = { uid: u.uid, display: u.display, username: u.username, school: u.school||'', date, testName, scores, topics, total, createdAt: Date.now() };
 
   // 確認モーダル表示
   const rows = SECTIONS.map(s=>`
@@ -743,7 +744,7 @@ async function doSaveRecord() {
 
   try {
     await addDoc(collection(db,'records'), {
-      uid: record.uid, display: record.display, username: record.username,
+      uid: record.uid, display: record.display, username: record.username, school: record.school||'',
       date: record.date, testName: record.testName, scores: record.scores, topics: record.topics, total: record.total,
       createdAt: record.createdAt
     });
@@ -1134,7 +1135,7 @@ function renderStudentList() {
         <div class="student-avatar">${s.display.charAt(0)}</div>
         <div class="student-info">
           <div class="student-name">${s.display}</div>
-          <div class="student-meta">${s.count}件の記録</div>
+          <div class="student-meta">${s.school||''}　${s.count}件の記録</div>
         </div>
         <div>
           <div class="student-score">${s.avg!=null?s.avg+'点':'—'}</div>
