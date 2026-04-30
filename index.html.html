@@ -342,7 +342,7 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
       </div>
       <div class="field">
         <label>所属校舎</label>
-        <input type="text" id="regSchool" placeholder="例：大宮校舎">
+        <input type="text" id="regSchool" placeholder="例：エイメイ鶴瀬校舎">
       </div>
 
       <button class="btn-login" onclick="doRegister()">登録してはじめる →</button>
@@ -449,24 +449,24 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
   </div>
 
   <div class="teacher-tabs">
-    <button class="teacher-tab active" onclick="switchTeacherTab('overview',this)">📊 クラス概要</button>
+    <button class="teacher-tab active" onclick="switchTeacherTab('overview',this)">📊 校舎概要</button>
     <button class="teacher-tab" onclick="switchTeacherTab('weakness',this)">⚠ 苦手分析</button>
     <button class="teacher-tab" onclick="switchTeacherTab('students',this)">👥 生徒一覧</button>
   </div>
 
-  <!-- クラス概要 -->
+  <!-- 校舎概要 -->
   <div class="teacher-page active" id="tpage-overview">
     <div class="t-card">
-      <div class="t-card-title">クラス全体統計</div>
+      <div class="t-card-title">校舎全体統計</div>
       <div class="class-stats-grid" id="classStatsGrid">
         <div class="class-stat"><div class="class-stat-val" id="t-totalStudents" style="color:var(--accent)">—</div><div class="class-stat-label">登録生徒数</div></div>
         <div class="class-stat"><div class="class-stat-val" id="t-totalRecords" style="color:var(--purple)">—</div><div class="class-stat-label">総記録数</div></div>
-        <div class="class-stat"><div class="class-stat-val" id="t-classAvg" style="color:var(--accent3)">—</div><div class="class-stat-label">クラス平均点</div></div>
-        <div class="class-stat"><div class="class-stat-val" id="t-classMax" style="color:var(--accent2)">—</div><div class="class-stat-label">クラス最高点</div></div>
+        <div class="class-stat"><div class="class-stat-val" id="t-classAvg" style="color:var(--accent3)">—</div><div class="class-stat-label">校舎平均点</div></div>
+        <div class="class-stat"><div class="class-stat-val" id="t-classMax" style="color:var(--accent2)">—</div><div class="class-stat-label">校舎最高点</div></div>
       </div>
     </div>
     <div class="t-card">
-      <div class="t-card-title">大問別 クラス平均点</div>
+      <div class="t-card-title">大問別 校舎平均点</div>
       <div id="sectionBars"></div>
     </div>
     <div class="t-card">
@@ -478,7 +478,7 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
   <!-- 苦手分析 -->
   <div class="teacher-page" id="tpage-weakness" style="display:none">
     <div class="t-card">
-      <div class="t-card-title">クラス全体の苦手トピック TOP10</div>
+      <div class="t-card-title">校舎全体の苦手トピック TOP10</div>
       <div id="weaknessRanking"></div>
     </div>
     <div class="t-card">
@@ -980,7 +980,7 @@ function switchTeacherTab(tab, el) {
 }
 
 // ══════════════════════════════
-//  クラス概要
+//  校舎概要
 // ══════════════════════════════
 function renderTeacherOverview() {
   const recs  = window.__allRecords || [];
@@ -1171,6 +1171,40 @@ function showStudentModal(uid) {
   });
   const maxA = Math.max(...sStats.map(s=>typeof s.avg==='number'?s.avg:0),1);
 
+  // 出題内容別分析
+  const topicDetails = SECTIONS.filter(s=>s.key!=='q1').map(s=>{
+    const topicMap = {};
+    recs.forEach(r=>{
+      const topic = r.topics&&r.topics[s.key];
+      const score = r.scores&&r.scores[s.key];
+      if (!topic||score==null) return;
+      if (!topicMap[topic]) topicMap[topic]={scores:[]};
+      topicMap[topic].scores.push(score);
+    });
+    const topicStats = Object.entries(topicMap)
+      .map(([name,d])=>({ name, avg:Math.round(d.scores.reduce((a,b)=>a+b,0)/d.scores.length*10)/10, count:d.scores.length }))
+      .sort((a,b)=>a.avg-b.avg);
+    if (!topicStats.length) return '';
+    const tMax = Math.max(...topicStats.map(t=>t.avg),1);
+    const rows = topicStats.map(t=>{
+      const pct = Math.round(t.avg/tMax*100);
+      const color = pct<50?'var(--danger)':pct<75?'var(--accent2)":'var(--accent3)';
+      return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+        <div style="min-width:130px;font-size:11px;font-weight:700">${t.name}</div>
+        <div style="flex:1;height:16px;background:var(--surface2);border-radius:4px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:4px;display:flex;align-items:center;justify-content:flex-end;padding-right:4px">
+            <span style="font-size:10px;font-weight:700;color:#0d1117">${t.avg}点</span>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);min-width:24px;text-align:right">${t.count}回</div>
+      </div>`;
+    }).join('');
+    return `<div style="margin-bottom:14px">
+      <div style="font-size:11px;font-weight:700;color:${s.color};letter-spacing:1px;margin-bottom:6px">${s.num} ${s.name}</div>
+      ${rows}
+    </div>`;
+  }).join('');
+
   document.getElementById('modalContent').innerHTML = `
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px">
       <div class="stat-box"><div class="stat-val" style="color:var(--accent)">${avg}</div><div class="stat-label">平均点</div></div>
@@ -1189,6 +1223,7 @@ function showStudentModal(uid) {
         </div>
       </div>`;
     }).join('')}
+    ${topicDetails ? `<div style="font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-muted);margin:16px 0 10px">出題内容別 得意・不得意</div>${topicDetails}` : ''}
     <div style="font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-muted);margin:16px 0 10px">最近の記録</div>
     ${recs.slice(0,5).map(r=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
