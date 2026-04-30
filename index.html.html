@@ -1399,8 +1399,7 @@ function downloadCSV() {
       r.scores?.q3??'', r.topics?.q3||'',
       r.scores?.q4??'', r.topics?.q4||'',
       r.scores?.q5??'', r.topics?.q5||'',
-    ].map(v=>{ const s=String(v); return s.includes(',') || s.includes('"') || s.includes('
-') ? '"'+s.replace(/"/g,'""')+'"' : s; });
+    ].map(v=>{ const s=String(v); return s.includes(',') || s.includes('"') ? '"'+s.replace(/"/g,'""')+'"' : s; });
   });
 
   // CSV文字列生成（BOM付きでExcel対応）
