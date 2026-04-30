@@ -387,7 +387,7 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
       <div class="card-title">基本情報</div>
       <div class="form-row">
         <div class="mfield"><label>実施日</label><input type="date" id="dateInput"></div>
-        <div class="mfield"><label>テスト名（必須）</label><input type="text" id="testNameInput" placeholder="例：第1回模擬試験"></div>
+        <div class="mfield"><label>テスト名（必須）</label><input type="text" id="testNameInput" placeholder="例：R5第2回北辰"></div>
       </div>
     </div>
     <div class="card">
@@ -702,8 +702,10 @@ async function addRecord() {
     document.getElementById('dateInput').valueAsDate=new Date();
     SECTIONS.forEach(s=>{
       document.getElementById('inp_'+s.key).value='';
-      document.getElementById('topic_'+s.key).value='';
-      const c=document.getElementById('topicCustom_'+s.key); c.value=''; c.classList.remove('visible');
+      const sel=document.getElementById('topic_'+s.key);
+      if (sel) sel.value='';
+      const c=document.getElementById('topicCustom_'+s.key);
+      if (c) { c.value=''; c.classList.remove('visible'); }
     });
     updateTotal();
     renderList(window.__myRecords || []);
