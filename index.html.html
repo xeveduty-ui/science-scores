@@ -506,6 +506,18 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
   </div>
 </div>
 
+
+<!-- 記録確認モーダル -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">内容を確認してください</div>
+      <button class="btn-close" onclick="closeConfirmModal()">キャンセル</button>
+    </div>
+    <div id="confirmContent"></div>
+    <button class="btn btn-primary" style="margin-top:16px" onclick="doSaveRecord()">✔ この内容で記録する</button>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -674,8 +686,10 @@ function updateTotal() {
 // ══════════════════════════════
 //  記録追加（Firestore）
 // ══════════════════════════════
-async function addRecord() {
-  const { db, collection, addDoc } = fb();
+// 一時保存用
+let __pendingRecord = null;
+
+function addRecord() {
   const date     = document.getElementById('dateInput').value;
   const testName = document.getElementById('testNameInput').value.trim();
   if (!date) return alert('日付を選んでください');
@@ -692,12 +706,46 @@ async function addRecord() {
   }
   const total=Object.values(scores).reduce((a,b)=>a+b,0);
   const u = window.__currentUser;
+  __pendingRecord = { uid: u.uid, display: u.display, username: u.username, date, testName, scores, topics, total, createdAt: Date.now() };
+
+  // 確認モーダル表示
+  const rows = SECTIONS.map(s=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:${s.color}">${s.num}　${s.name}</div>
+        ${s.key!=='q1'&&topics[s.key]?'<div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+topics[s.key]+'</div>':''}
+      </div>
+      <div style="font-family:Space Mono,monospace;font-size:20px;font-weight:700;color:${s.color}">${scores[s.key]}点</div>
+    </div>
+  `).join('');
+  document.getElementById('confirmContent').innerHTML = `
+    <div style="background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">テスト名</div>
+      <div style="font-size:16px;font-weight:700">${testName}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${date.replace(/-/g,'/')}</div>
+    </div>
+    ${rows}
+    <div style="text-align:right;margin-top:8px;font-family:Space Mono,monospace;font-size:22px;font-weight:700;color:var(--accent)">合計 ${total}点</div>
+  `;
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModal').classList.remove('open');
+  __pendingRecord = null;
+}
+
+async function doSaveRecord() {
+  if (!__pendingRecord) return;
+  const { db, collection, addDoc } = fb();
+  const record = __pendingRecord;
+  closeConfirmModal();
 
   try {
     await addDoc(collection(db,'records'), {
-      uid: u.uid, display: u.display, username: u.username,
-      date, testName: testName, scores, topics, total,
-      createdAt: Date.now()
+      uid: record.uid, display: record.display, username: record.username,
+      date: record.date, testName: record.testName, scores: record.scores, topics: record.topics, total: record.total,
+      createdAt: record.createdAt
     });
     showToast('✓ 記録しました！');
     document.getElementById('testNameInput').value='';
