@@ -380,7 +380,10 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
         <div class="user-label"><span class="sync-indicator"><span class="sync-dot"></span>クラウド同期中</span></div>
       </div>
     </div>
-    <button class="btn-logout" onclick="doLogout()">ログアウト</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="showResetModal()" style="background:transparent;border:1px solid var(--danger);color:var(--danger);padding:6px 12px;border-radius:6px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(255,107,107,0.1)'" onmouseout="this.style.background='transparent'">🗑 年度リセット</button>
+      <button class="btn-logout" onclick="doLogout()">ログアウト</button>
+    </div>
   </div>
 
   <div class="tabs">
@@ -452,7 +455,10 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
         <div class="user-label" id="teacherEmail">—</div>
       </div>
     </div>
-    <button class="btn-logout" onclick="doLogout()">ログアウト</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="showResetModal()" style="background:transparent;border:1px solid var(--danger);color:var(--danger);padding:6px 12px;border-radius:6px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;cursor:pointer;transition:all .2s" onmouseover="this.style.background='rgba(255,107,107,0.1)'" onmouseout="this.style.background='transparent'">🗑 年度リセット</button>
+      <button class="btn-logout" onclick="doLogout()">ログアウト</button>
+    </div>
   </div>
 
   <div class="teacher-tabs">
@@ -513,7 +519,10 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
       </div>
     </div>
     <div class="t-card">
-      <div class="t-card-title" id="studentListTitle">生徒一覧（平均点順）</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+        <div class="t-card-title" id="studentListTitle" style="margin-bottom:0">生徒一覧（平均点順）</div>
+        <button onclick="downloadCSV()" style="background:var(--accent3);color:#0d1117;border:none;border-radius:8px;padding:8px 14px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:13px;cursor:pointer;display:flex;align-items:center;gap:6px">⬇ CSVダウンロード</button>
+      </div>
       <div id="studentList"></div>
     </div>
   </div>
@@ -540,6 +549,31 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
     </div>
     <div id="confirmContent"></div>
     <button class="btn btn-primary" style="margin-top:16px" onclick="doSaveRecord()">✔ この内容で記録する</button>
+  </div>
+</div>
+
+<!-- 年度リセットモーダル -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--danger)">⚠ 年度リセット</div>
+      <button class="btn-close" onclick="closeResetModal()">キャンセル</button>
+    </div>
+    <div id="resetStep1">
+      <div style="background:rgba(255,107,107,0.1);border:1px solid var(--danger);border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8">
+        <strong>以下のデータがすべて削除されます：</strong><br>
+        ・全生徒のテスト記録（点数・出題内容）<br>
+        ・生徒アカウントはそのまま残ります
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">この操作は取り消せません。本当によろしいですか？</div>
+      <button onclick="showResetStep2()" style="width:100%;padding:13px;background:var(--danger);color:#fff;border:none;border-radius:8px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:15px;cursor:pointer">削除する →</button>
+    </div>
+    <div id="resetStep2" style="display:none">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">最終確認：下の欄に「リセット」と入力してください</div>
+      <input type="text" id="resetConfirmInput" placeholder="リセット" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;outline:none;margin-bottom:12px">
+      <button onclick="doYearReset()" style="width:100%;padding:13px;background:var(--danger);color:#fff;border:none;border-radius:8px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:15px;cursor:pointer">🗑 全記録を完全に削除する</button>
+      <div id="resetMsg" style="text-align:center;font-size:13px;margin-top:10px;min-height:18px"></div>
+    </div>
   </div>
 </div>
 <div id="toast"></div>
@@ -1327,6 +1361,111 @@ document.getElementById('studentModal').addEventListener('click', e=>{ if(e.targ
 // ══════════════════════════════
 //  トースト
 // ══════════════════════════════
+// ══════════════════════════════
+//  CSVダウンロード
+// ══════════════════════════════
+function downloadCSV() {
+  const recs  = window.__filteredStudentRecs  || window.__allRecords || [];
+  const users = window.__filteredStudentUsers || window.__allUsers   || [];
+
+  if (!recs.length) { alert('ダウンロードするデータがありません'); return; }
+
+  // ユーザー情報をuidでマップ
+  const userMap = {};
+  users.forEach(u=>{ userMap[u.uid]=u; });
+
+  // ヘッダー行
+  const headers = [
+    '表示名','ユーザー名','所属校舎','日付','テスト名','合計点',
+    '大問１点数',
+    '大問２点数','大問２出題内容',
+    '大問３点数','大問３出題内容',
+    '大問４点数','大問４出題内容',
+    '大問５点数','大問５出題内容',
+  ];
+
+  // データ行
+  const rows = recs.map(r=>{
+    const u = userMap[r.uid] || {};
+    return [
+      u.display||r.display||'',
+      u.username||r.username||'',
+      u.school||r.school||'',
+      r.date||'',
+      r.testName||'',
+      r.total||0,
+      r.scores?.q1??'',
+      r.scores?.q2??'', r.topics?.q2||'',
+      r.scores?.q3??'', r.topics?.q3||'',
+      r.scores?.q4??'', r.topics?.q4||'',
+      r.scores?.q5??'', r.topics?.q5||'',
+    ].map(v=>{ const s=String(v); return s.includes(',') || s.includes('"') || s.includes('
+') ? '"'+s.replace(/"/g,'""')+'"' : s; });
+  });
+
+  // CSV文字列生成（BOM付きでExcel対応）
+  const bom = '﻿';
+  const csv = bom + [headers, ...rows].map(r=>r.join(',')).join('
+');
+
+  // ダウンロード
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const school = document.getElementById('schoolFilterStudents')?.value || 'all';
+  const date   = new Date().toISOString().slice(0,10);
+  a.href     = url;
+  a.download = `理科点数_${school==='all'?'全校舎':school}_${date}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ CSVをダウンロードしました');
+}
+
+// ══════════════════════════════
+//  年度リセット
+// ══════════════════════════════
+function showResetModal() {
+  document.getElementById('resetStep1').style.display = 'block';
+  document.getElementById('resetStep2').style.display = 'none';
+  document.getElementById('resetConfirmInput').value = '';
+  document.getElementById('resetMsg').textContent = '';
+  document.getElementById('resetModal').classList.add('open');
+}
+function closeResetModal() {
+  document.getElementById('resetModal').classList.remove('open');
+}
+function showResetStep2() {
+  document.getElementById('resetStep1').style.display = 'none';
+  document.getElementById('resetStep2').style.display = 'block';
+  document.getElementById('resetConfirmInput').focus();
+}
+async function doYearReset() {
+  const input = document.getElementById('resetConfirmInput').value.trim();
+  const msg   = document.getElementById('resetMsg');
+  if (input !== 'リセット') {
+    msg.style.color = 'var(--danger)';
+    msg.textContent = '「リセット」と正確に入力してください';
+    return;
+  }
+  msg.style.color = 'var(--text-muted)';
+  msg.textContent = '削除中…';
+
+  const { db, collection, getDocs, deleteDoc, doc } = fb();
+  try {
+    const snap = await getDocs(collection(db, 'records'));
+    const promises = snap.docs.map(d => deleteDoc(doc(db, 'records', d.id)));
+    await Promise.all(promises);
+    window.__allRecords = [];
+    window.__filteredStudentRecs = [];
+    closeResetModal();
+    showToast('✓ 全記録を削除しました');
+    loadTeacherData();
+  } catch(e) {
+    msg.style.color = 'var(--danger)';
+    msg.textContent = '削除に失敗しました: ' + e.message;
+  }
+}
+
 function showToast(msg) {
   const t=document.getElementById('toast'); t.textContent=msg;
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
