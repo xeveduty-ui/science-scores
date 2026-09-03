@@ -143,9 +143,17 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
 .mfield input:focus, .mfield select:focus { border-color:var(--accent); }
 .mfield select option { background:var(--surface2); }
 .form-row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+@media (max-width:540px) { .form-row { grid-template-columns:1fr; } }
 
 .section-block { background:var(--surface2); border:1px solid var(--border); border-radius:12px; padding:14px; margin-bottom:10px; }
 .section-top { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:10px; margin-bottom:10px; }
+@media (max-width:540px) {
+  .section-top { grid-template-columns:1fr 1fr; grid-template-rows:auto auto; }
+  .section-label { grid-column:1; grid-row:1; }
+  .score-wrap { grid-column:2; grid-row:1; justify-content:flex-end; }
+  .topic-row { grid-column:1 / -1; grid-row:2; }
+  .section-input { width:60px; font-size:18px; }
+}
 .section-label { display:flex; flex-direction:column; gap:3px; min-width:80px; }
 .section-num { font-family:'Space Mono',monospace; font-size:11px; font-weight:700; letter-spacing:1px; }
 .section-name { font-size:14px; font-weight:900; }
@@ -408,7 +416,7 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
       <div class="card-title">基本情報</div>
       <div class="form-row">
         <div class="mfield"><label>実施日</label><input type="date" id="dateInput"></div>
-        <div class="mfield"><label>テスト名（任意）</label><input type="text" id="testNameInput" placeholder="例：第1回模擬試験"></div>
+        <div class="mfield"><label>テスト名（必須）</label><input type="text" id="testNameInput" placeholder="例：R5第2回北辰"></div>
       </div>
     </div>
     <div class="card">
@@ -465,28 +473,39 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
         <div class="user-label" id="teacherEmail">—</div>
       </div>
     </div>
-    <button class="btn-logout" onclick="doLogout()">ログアウト</button>
+    <div style="display:flex;gap:8px">
+      <button onclick="showResetModal()" style="background:transparent;border:1px solid var(--danger);color:var(--danger);padding:6px 12px;border-radius:6px;font-family:'Zen Kaku Gothic New',sans-serif;font-size:12px;cursor:pointer">🗑 年度リセット</button>
+      <button class="btn-logout" onclick="doLogout()">ログアウト</button>
+    </div>
   </div>
 
   <div class="teacher-tabs">
-    <button class="teacher-tab active" onclick="switchTeacherTab('overview',this)">📊 クラス概要</button>
+    <button class="teacher-tab active" onclick="switchTeacherTab('overview',this)">📊 校舎選択</button>
     <button class="teacher-tab" onclick="switchTeacherTab('weakness',this)">⚠ 苦手分析</button>
     <button class="teacher-tab" onclick="switchTeacherTab('students',this)">👥 生徒一覧</button>
   </div>
 
-  <!-- クラス概要 -->
+  <!-- 校舎概要 -->
   <div class="teacher-page active" id="tpage-overview">
-    <div class="t-card">
-      <div class="t-card-title">クラス全体統計</div>
-      <div class="class-stats-grid" id="classStatsGrid">
-        <div class="class-stat"><div class="class-stat-val" id="t-totalStudents" style="color:var(--accent)">—</div><div class="class-stat-label">登録生徒数</div></div>
-        <div class="class-stat"><div class="class-stat-val" id="t-totalRecords" style="color:var(--purple)">—</div><div class="class-stat-label">総記録数</div></div>
-        <div class="class-stat"><div class="class-stat-val" id="t-classAvg" style="color:var(--accent3)">—</div><div class="class-stat-label">クラス平均点</div></div>
-        <div class="class-stat"><div class="class-stat-val" id="t-classMax" style="color:var(--accent2)">—</div><div class="class-stat-label">クラス最高点</div></div>
+    <div class="t-card" style="padding:14px 20px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:1px">校舎を選択</div>
+        <select id="schoolFilter" onchange="onSchoolFilterChange()" style="flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;outline:none">
+          <option value="all">すべての校舎</option>
+        </select>
       </div>
     </div>
     <div class="t-card">
-      <div class="t-card-title">大問別 クラス平均点</div>
+      <div class="t-card-title">校舎全体統計</div>
+      <div class="class-stats-grid" id="classStatsGrid">
+        <div class="class-stat"><div class="class-stat-val" id="t-totalStudents" style="color:var(--accent)">—</div><div class="class-stat-label">登録生徒数</div></div>
+        <div class="class-stat"><div class="class-stat-val" id="t-totalRecords" style="color:var(--purple)">—</div><div class="class-stat-label">総記録数</div></div>
+        <div class="class-stat"><div class="class-stat-val" id="t-classAvg" style="color:var(--accent3)">—</div><div class="class-stat-label">校舎平均点</div></div>
+        <div class="class-stat"><div class="class-stat-val" id="t-classMax" style="color:var(--accent2)">—</div><div class="class-stat-label">校舎最高点</div></div>
+      </div>
+    </div>
+    <div class="t-card">
+      <div class="t-card-title">大問別 校舎平均点</div>
       <div id="sectionBars"></div>
     </div>
     <div class="t-card">
@@ -498,7 +517,7 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
   <!-- 苦手分析 -->
   <div class="teacher-page" id="tpage-weakness" style="display:none">
     <div class="t-card">
-      <div class="t-card-title">クラス全体の苦手トピック TOP10</div>
+      <div class="t-card-title">校舎全体の苦手トピック TOP10</div>
       <div id="weaknessRanking"></div>
     </div>
     <div class="t-card">
@@ -509,8 +528,19 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
 
   <!-- 生徒一覧 -->
   <div class="teacher-page" id="tpage-students" style="display:none">
+    <div class="t-card" style="padding:14px 20px">
+      <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
+        <div style="font-size:12px;font-weight:700;color:var(--text-muted);letter-spacing:1px">校舎を選択</div>
+        <select id="schoolFilterStudents" onchange="onSchoolFilterStudentsChange()" style="flex:1;min-width:160px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:14px;outline:none">
+          <option value="all">すべての校舎</option>
+        </select>
+      </div>
+    </div>
     <div class="t-card">
-      <div class="t-card-title">生徒一覧（平均点順）</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px;flex-wrap:wrap">
+        <div class="t-card-title" id="studentListTitle" style="margin-bottom:0">生徒一覧（平均点順）</div>
+        <button onclick="downloadCSV()" style="background:var(--accent3);color:#ffffff;border:none;border-radius:8px;padding:8px 14px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:700;font-size:13px;cursor:pointer">⬇ CSVダウンロード</button>
+      </div>
       <div id="studentList"></div>
     </div>
   </div>
@@ -527,6 +557,43 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
   </div>
 </div>
 
+
+<!-- 記録確認モーダル -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title">内容を確認してください</div>
+      <button class="btn-close" onclick="closeConfirmModal()">キャンセル</button>
+    </div>
+    <div id="confirmContent"></div>
+    <button class="btn btn-primary" style="margin-top:16px" onclick="doSaveRecord()">✔ この内容で記録する</button>
+  </div>
+</div>
+
+<!-- 年度リセットモーダル -->
+<div class="modal-overlay" id="resetModal">
+  <div class="modal-box">
+    <div class="modal-header">
+      <div class="modal-title" style="color:var(--danger)">⚠ 年度リセット</div>
+      <button class="btn-close" onclick="closeResetModal()">キャンセル</button>
+    </div>
+    <div id="resetStep1">
+      <div style="background:rgba(224,85,85,0.12);border:1px solid var(--danger);border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;line-height:1.8">
+        <strong>以下のデータがすべて削除されます：</strong><br>
+        ・全生徒のテスト記録（点数・出題内容）<br>
+        ・生徒アカウントはそのまま残ります
+      </div>
+      <div style="font-size:13px;color:var(--text-muted);margin-bottom:16px">この操作は取り消せません。本当によろしいですか？</div>
+      <button onclick="showResetStep2()" style="width:100%;padding:13px;background:var(--danger);color:#ffffff;border:none;border-radius:8px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:15px;cursor:pointer">削除する →</button>
+    </div>
+    <div id="resetStep2" style="display:none">
+      <div style="font-size:14px;font-weight:700;margin-bottom:12px">最終確認：下の欄に「リセット」と入力してください</div>
+      <input type="text" id="resetConfirmInput" placeholder="リセット" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;outline:none;margin-bottom:12px">
+      <button onclick="doYearReset()" style="width:100%;padding:13px;background:var(--danger);color:#ffffff;border:none;border-radius:8px;font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:15px;cursor:pointer">🗑 全記録を完全に削除する</button>
+      <div id="resetMsg" style="text-align:center;font-size:13px;margin-top:10px;min-height:18px"></div>
+    </div>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script>
@@ -534,11 +601,11 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
 //  定数
 // ══════════════════════════════
 const SECTIONS = [
-  { key:'q1', num:'大問１', name:'小問集合', color:'var(--c1)', topics:['総合（小問集合）','地学・生物・化学・物理 混合','その他'] },
-  { key:'q2', num:'大問２', name:'地学',     color:'var(--c2)', topics:['地層・岩石','地震','火山','天気・気象','太陽・月・星','宇宙・天体','その他'] },
-  { key:'q3', num:'大問３', name:'生物',     color:'var(--c3)', topics:['植物のつくりとはたらき','動物のからだ','細胞・生命活動','遺伝・進化','生態系・食物連鎖','その他'] },
-  { key:'q4', num:'大問４', name:'化学',     color:'var(--c4)', topics:['物質の性質・状態変化','化学変化・化学反応式','原子・分子・イオン','酸・アルカリ・中和','電気分解・電池','その他'] },
-  { key:'q5', num:'大問５', name:'物理',     color:'var(--c5)', topics:['光・音','力・圧力・浮力','電流・電圧・抵抗','磁界・電磁誘導','運動とエネルギー','その他'] },
+  { key:'q1', num:'大問１', name:'小問集合', color:'var(--c1)', topics:[] },
+  { key:'q2', num:'大問２', name:'地学',     color:'var(--c2)', topics:['地震','火山','岩石','地層','天気図','水蒸気・湿度・雲のでき方','前線','季節風','気団・季節','宇宙のつくり','太陽の動き','年周運動（1年間の動き）','月の動き','金星','その他'] },
+  { key:'q3', num:'大問３', name:'生物',     color:'var(--c3)', topics:['植物の分類','動物の分類','光合成','蒸散・維管束','消化・吸収','血液','循環・臓器のはたらき','刺激と反応','細胞分裂','発生','遺伝','進化','その他'] },
+  { key:'q4', num:'大問４', name:'化学',     color:'var(--c4)', topics:['固体の分類','密度','気体の性質','水溶液・溶解度・再結晶','状態変化・蒸留','化学変化','分解','酸化・還元','質量保存の法則','電気分解（イオン）','電池','酸・アルカリ','中和','その他'] },
+  { key:'q5', num:'大問５', name:'物理',     color:'var(--c5)', topics:['光','音','力（バネ）','電流','発熱量（水の温度上昇）','磁界（右ネジやフレミング）','モーター','電磁誘導','静電気','浮力・水圧','力の合成分解','物体の運動','力学的エネルギー','仕事','その他'] },
 ];
 
 // ══════════════════════════════
@@ -658,13 +725,14 @@ function buildSectionsGrid() {
           <div class="section-num" style="color:${s.color}">${s.num}</div>
           <div class="section-name" style="color:${s.color}">${s.name}</div>
         </div>
+        ${s.key === 'q1' ? '<div class="topic-row"></div>' : `
         <div class="topic-row">
           <select class="topic-select" id="topic_${s.key}" onchange="onTopicChange('${s.key}')">
             <option value="">出題内容を選択</option>
             ${s.topics.map(t=>`<option value="${t}">${t}</option>`).join('')}
           </select>
           <input class="topic-input" id="topicCustom_${s.key}" placeholder="内容を入力…" type="text">
-        </div>
+        </div>`}
         <div class="score-wrap">
           <input class="section-input" type="number" id="inp_${s.key}" placeholder="—" min="0" oninput="updateTotal()" style="border-color:${s.color}55">
           <span class="score-unit">点</span>
@@ -679,7 +747,9 @@ function onTopicChange(key) {
   else { custom.classList.remove('visible'); custom.value=''; }
 }
 function getTopicValue(key) {
-  const sel=document.getElementById('topic_'+key), custom=document.getElementById('topicCustom_'+key);
+  const sel=document.getElementById('topic_'+key);
+  if (!sel) return '';
+  const custom=document.getElementById('topicCustom_'+key);
   return sel.value==='その他' ? (custom.value.trim()||'その他') : sel.value;
 }
 function updateTotal() {
@@ -692,35 +762,73 @@ function updateTotal() {
 // ══════════════════════════════
 //  記録追加（Firestore）
 // ══════════════════════════════
-async function addRecord() {
-  const { db, collection, addDoc } = fb();
+let __pendingRecord = null;
+
+function addRecord() {
   const date     = document.getElementById('dateInput').value;
   const testName = document.getElementById('testNameInput').value.trim();
   if (!date) return alert('日付を選んでください');
+  if (!testName) return alert('テスト名を入力してください');
 
   const scores={}, topics={};
   for (const s of SECTIONS) {
     const raw=document.getElementById('inp_'+s.key).value, v=parseInt(raw);
     if (raw===''||isNaN(v)) return alert(`${s.num}（${s.name}）の点数を入力してください`);
     if (v<0) return alert(`${s.num}の点数は0以上で入力してください`);
-    scores[s.key]=v; topics[s.key]=getTopicValue(s.key);
+    const topic=getTopicValue(s.key);
+    if (s.key !== 'q1' && !topic) return alert(`${s.num}（${s.name}）の出題内容を選択してください`);
+    scores[s.key]=v; topics[s.key]=topic;
   }
   const total=Object.values(scores).reduce((a,b)=>a+b,0);
   const u = window.__currentUser;
+  __pendingRecord = { uid:u.uid, display:u.display, username:u.username, school:u.school||'', date, testName, scores, topics, total, createdAt: Date.now() };
 
+  const rows = SECTIONS.map(s=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:${s.color}">${s.num}　${s.name}</div>
+        ${s.key!=='q1'&&topics[s.key]?'<div style="font-size:11px;color:var(--text-muted);margin-top:2px">'+topics[s.key]+'</div>':''}
+      </div>
+      <div style="font-family:'Space Mono',monospace;font-size:20px;font-weight:700;color:${s.color}">${scores[s.key]}点</div>
+    </div>
+  `).join('');
+  document.getElementById('confirmContent').innerHTML = `
+    <div style="background:var(--surface2);border-radius:8px;padding:10px 14px;margin-bottom:12px">
+      <div style="font-size:12px;color:var(--text-muted);margin-bottom:4px">テスト名</div>
+      <div style="font-size:16px;font-weight:700">${testName}</div>
+      <div style="font-size:12px;color:var(--text-muted);margin-top:4px">${date.replace(/-/g,'/')}</div>
+    </div>
+    ${rows}
+    <div style="text-align:right;margin-top:8px;font-family:'Space Mono',monospace;font-size:22px;font-weight:700;color:var(--accent)">合計 ${total}点</div>
+  `;
+  document.getElementById('confirmModal').classList.add('open');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirmModal').classList.remove('open');
+  __pendingRecord = null;
+}
+
+async function doSaveRecord() {
+  if (!__pendingRecord) return;
+  const { db, collection, addDoc } = fb();
+  const rec = __pendingRecord;
+  closeConfirmModal();
   try {
     await addDoc(collection(db,'records'), {
-      uid: u.uid, display: u.display, email: u.email,
-      date, testName: testName||'テスト', scores, topics, total,
-      createdAt: Date.now()
+      uid: rec.uid, display: rec.display, username: rec.username||'', school: rec.school||'',
+      date: rec.date, testName: rec.testName, scores: rec.scores, topics: rec.topics, total: rec.total,
+      createdAt: rec.createdAt
     });
     showToast('✓ 記録しました！');
     document.getElementById('testNameInput').value='';
     document.getElementById('dateInput').valueAsDate=new Date();
     SECTIONS.forEach(s=>{
       document.getElementById('inp_'+s.key).value='';
-      document.getElementById('topic_'+s.key).value='';
-      const c=document.getElementById('topicCustom_'+s.key); c.value=''; c.classList.remove('visible');
+      const sel=document.getElementById('topic_'+s.key);
+      if (sel) sel.value='';
+      const cst=document.getElementById('topicCustom_'+s.key);
+      if (cst) { cst.value=''; cst.classList.remove('visible'); }
     });
     updateTotal();
     renderList(window.__myRecords || []);
@@ -860,7 +968,8 @@ function renderAnalysis(recs) {
         <div class="stat-box"><div class="stat-val" style="color:var(--danger)">${allMin}</div><div class="stat-label">最低合計点</div></div>
       </div>
       ${cards}
-    </div>`;
+    </div>
+    ${buildTopicBreakdown(recs)}`;
 }
 
 function buildRadar(stats, maxVal) {
@@ -911,11 +1020,41 @@ function switchTeacherTab(tab, el) {
 // ══════════════════════════════
 //  クラス概要
 // ══════════════════════════════
+function onSchoolFilterChange() {
+  renderTeacherOverview();
+  renderTeacherWeakness();
+}
+function getSelectedSchool() {
+  const sel = document.getElementById('schoolFilter');
+  return sel ? sel.value : 'all';
+}
+function getFilteredData() {
+  const school = getSelectedSchool();
+  const allRecs  = window.__allRecords || [];
+  const allUsers = window.__allUsers   || [];
+  if (school === 'all') return { recs: allRecs, users: allUsers };
+  const uids = allUsers.filter(u=>u.school===school).map(u=>u.uid);
+  return { recs: allRecs.filter(r=>uids.includes(r.uid)), users: allUsers.filter(u=>u.school===school) };
+}
+function fillSchoolSelect(id) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  const schools = [...new Set((window.__allUsers||[]).map(u=>u.school).filter(Boolean))].sort();
+  const cur = sel.value;
+  sel.innerHTML = '<option value="all">すべての校舎</option>' +
+    schools.map(s=>`<option value="${s}" ${s===cur?'selected':''}>${s}</option>`).join('');
+}
+
 function renderTeacherOverview() {
-  const recs  = window.__allRecords || [];
-  const users = window.__allUsers   || [];
+  fillSchoolSelect('schoolFilter');
+  const { recs, users } = getFilteredData();
   if (!recs.length) {
     document.getElementById('sectionBars').innerHTML = '<div style="color:var(--text-muted);font-size:13px;text-align:center;padding:20px">まだデータがありません</div>';
+    document.getElementById('t-totalStudents').textContent = users.length;
+    document.getElementById('t-totalRecords').textContent  = 0;
+    document.getElementById('t-classAvg').textContent      = '—';
+    document.getElementById('t-classMax').textContent      = '—';
+    document.getElementById('scoreDist').innerHTML = '';
     return;
   }
   const tots = recs.map(r=>r.total);
@@ -968,7 +1107,9 @@ function renderTeacherOverview() {
 //  苦手分析
 // ══════════════════════════════
 function renderTeacherWeakness() {
-  const recs = window.__allRecords || [];
+  const { recs } = getFilteredData();
+  document.getElementById('weaknessRanking').innerHTML = '';
+  document.getElementById('sectionWeakness').innerHTML = '';
   if (!recs.length) return;
 
   // トピック別 低得点集計
@@ -1044,9 +1185,21 @@ function renderTeacherWeakness() {
 // ══════════════════════════════
 //  生徒一覧
 // ══════════════════════════════
+function onSchoolFilterStudentsChange() { renderStudentList(); }
+
 function renderStudentList() {
-  const recs  = window.__allRecords || [];
-  const users = window.__allUsers   || [];
+  fillSchoolSelect('schoolFilterStudents');
+  const sel = document.getElementById('schoolFilterStudents');
+  const school = sel ? sel.value : 'all';
+  const allUsers = window.__allUsers || [];
+  const allRecs  = window.__allRecords || [];
+  const users = school==='all' ? allUsers : allUsers.filter(u=>u.school===school);
+  const uids  = users.map(u=>u.uid);
+  const recs  = school==='all' ? allRecs : allRecs.filter(r=>uids.includes(r.uid));
+  window.__filteredStudentUsers = users;
+  window.__filteredStudentRecs  = recs;
+  const title = document.getElementById('studentListTitle');
+  if (title) title.textContent = (school==='all'?'全校舎':school) + ' 生徒一覧（平均点順）';
 
   const byUid = {};
   recs.forEach(r=>{ if (!byUid[r.uid]) byUid[r.uid]=[]; byUid[r.uid].push(r); });
@@ -1127,6 +1280,7 @@ function showStudentModal(uid) {
         </div>
       </div>`;
     }).join('')}
+    ${(()=>{ const td = buildTopicBreakdown(recs,{compact:true}); return td ? `<div style="font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-muted);margin:16px 0 10px">出題内容別 得意・不得意</div>${td}` : ''; })()}
     <div style="font-size:12px;font-weight:700;letter-spacing:2px;color:var(--text-muted);margin:16px 0 10px">最近の記録</div>
     ${recs.slice(0,5).map(r=>`
       <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 10px;background:var(--surface2);border-radius:8px;margin-bottom:6px">
@@ -1144,6 +1298,129 @@ document.getElementById('studentModal').addEventListener('click', e=>{ if(e.targ
 // ══════════════════════════════
 //  トースト
 // ══════════════════════════════
+// ══════════════════════════════
+//  CSVダウンロード
+// ══════════════════════════════
+function downloadCSV() {
+  const recs  = window.__filteredStudentRecs  || window.__allRecords || [];
+  const users = window.__filteredStudentUsers || window.__allUsers   || [];
+  if (!recs.length) { alert('ダウンロードするデータがありません'); return; }
+  const userMap = {};
+  users.forEach(u=>{ userMap[u.uid]=u; });
+  const headers = ['表示名','ユーザー名','所属校舎','日付','テスト名','合計点','大問1点数','大問2点数','大問2出題内容','大問3点数','大問3出題内容','大問4点数','大問4出題内容','大問5点数','大問5出題内容'];
+  const rows = recs.map(r=>{
+    const u = userMap[r.uid] || {};
+    return [
+      u.display||r.display||'', u.username||r.username||'', u.school||r.school||'',
+      r.date||'', r.testName||'', r.total||0,
+      r.scores?.q1??'',
+      r.scores?.q2??'', r.topics?.q2||'',
+      r.scores?.q3??'', r.topics?.q3||'',
+      r.scores?.q4??'', r.topics?.q4||'',
+      r.scores?.q5??'', r.topics?.q5||''
+    ].map(v=>{ const s=String(v); return (s.includes(',')||s.includes('"')) ? '"'+s.replace(/"/g,'""')+'"' : s; });
+  });
+  const csv = '\ufeff' + [headers, ...rows].map(r=>r.join(',')).join('\r\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  const sel = document.getElementById('schoolFilterStudents');
+  const school = sel ? sel.value : 'all';
+  a.href = url;
+  a.download = '理科点数_' + (school==='all'?'全校舎':school) + '_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('✓ CSVをダウンロードしました');
+}
+
+// ══════════════════════════════
+//  年度リセット
+// ══════════════════════════════
+function showResetModal() {
+  document.getElementById('resetStep1').style.display = 'block';
+  document.getElementById('resetStep2').style.display = 'none';
+  document.getElementById('resetConfirmInput').value = '';
+  document.getElementById('resetMsg').textContent = '';
+  document.getElementById('resetModal').classList.add('open');
+}
+function closeResetModal() { document.getElementById('resetModal').classList.remove('open'); }
+function showResetStep2() {
+  document.getElementById('resetStep1').style.display = 'none';
+  document.getElementById('resetStep2').style.display = 'block';
+  document.getElementById('resetConfirmInput').focus();
+}
+async function doYearReset() {
+  const input = document.getElementById('resetConfirmInput').value.trim();
+  const msg = document.getElementById('resetMsg');
+  if (input !== 'リセット') {
+    msg.style.color = 'var(--danger)';
+    msg.textContent = '「リセット」と正確に入力してください';
+    return;
+  }
+  msg.style.color = 'var(--text-muted)';
+  msg.textContent = '削除中…';
+  const { db, collection, getDocs, deleteDoc, doc } = fb();
+  try {
+    const snap = await getDocs(collection(db,'records'));
+    await Promise.all(snap.docs.map(d=>deleteDoc(doc(db,'records',d.id))));
+    window.__allRecords = [];
+    window.__filteredStudentRecs = [];
+    closeResetModal();
+    showToast('✓ 全記録を削除しました');
+    loadTeacherData();
+  } catch(e) {
+    msg.style.color = 'var(--danger)';
+    msg.textContent = '削除に失敗しました: ' + e.message;
+  }
+}
+
+// ══════════════════════════════
+//  出題内容別の集計（共通）
+// ══════════════════════════════
+function buildTopicBreakdown(recs, opts) {
+  const compact = opts && opts.compact;
+  return SECTIONS.filter(s=>s.key!=='q1').map(s=>{
+    const map = {};
+    recs.forEach(r=>{
+      const topic = r.topics && r.topics[s.key];
+      const score = r.scores && r.scores[s.key];
+      if (!topic || score==null) return;
+      if (!map[topic]) map[topic] = [];
+      map[topic].push(score);
+    });
+    const stats = Object.entries(map)
+      .map(([name,arr])=>({ name, avg:Math.round(arr.reduce((a,b)=>a+b,0)/arr.length*10)/10, count:arr.length }))
+      .sort((a,b)=>a.avg-b.avg);
+    if (!stats.length) return '';
+    const tMax = Math.max(...stats.map(t=>t.avg),1);
+    const rows = stats.map(t=>{
+      const pct = Math.round(t.avg/tMax*100);
+      const color = pct<50?'var(--danger)':pct<75?'var(--accent2)':'var(--accent3)';
+      const lw = compact ? 120 : 160;
+      const bh = compact ? 16 : 18;
+      return `<div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div style="min-width:${lw}px;font-size:${compact?11:12}px;font-weight:700">${t.name}</div>
+        <div style="flex:1;height:${bh}px;background:var(--surface2);border-radius:6px;overflow:hidden">
+          <div style="height:100%;width:${pct}%;background:${color};border-radius:6px;display:flex;align-items:center;justify-content:flex-end;padding-right:6px">
+            <span style="font-size:${compact?10:11}px;font-weight:700;color:#ffffff">${t.avg}点</span>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text-muted);min-width:28px;text-align:right">${t.count}回</div>
+      </div>`;
+    }).join('');
+    if (compact) {
+      return `<div style="margin-bottom:14px">
+        <div style="font-size:11px;font-weight:700;color:${s.color};letter-spacing:1px;margin-bottom:6px">${s.num} ${s.name}</div>
+        ${rows}
+      </div>`;
+    }
+    return `<div class="card">
+      <div class="card-title">${s.num}　${s.name}　出題内容別平均点</div>
+      ${rows}
+    </div>`;
+  }).join('');
+}
+
 function showToast(msg) {
   const t=document.getElementById('toast'); t.textContent=msg;
   t.classList.add('show'); setTimeout(()=>t.classList.remove('show'),2500);
