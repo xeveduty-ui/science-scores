@@ -340,6 +340,32 @@ header .sub { font-size:12px; color:var(--text-muted); margin-top:6px; }
         <label>パスワード（6文字以上）</label>
         <input type="password" id="regPass" placeholder="6文字以上で設定" autocomplete="new-password">
       </div>
+      <div class="field">
+        <label>所属校舎</label>
+        <select id="regSchool" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;color:var(--text);font-family:'Zen Kaku Gothic New',sans-serif;font-size:15px;outline:none;">
+          <option value="">校舎を選択してください</option>
+          <option value="Eみずほ台">Eみずほ台</option>
+          <option value="E・M水谷">E・M水谷</option>
+          <option value="Eルーチェ鶴瀬">Eルーチェ鶴瀬</option>
+          <option value="E・Mふじみ野上福岡">E・Mふじみ野上福岡</option>
+          <option value="Eトナリエ">Eトナリエ</option>
+          <option value="E・Mうれし野">E・Mうれし野</option>
+          <option value="E・M羽沢">E・M羽沢</option>
+          <option value="E・M南大塚">E・M南大塚</option>
+          <option value="E・M柳瀬川志木">E・M柳瀬川志木</option>
+          <option value="E・M清水町">E・M清水町</option>
+          <option value="E・M朝霞根岸台">E・M朝霞根岸台</option>
+          <option value="M南古谷">M南古谷</option>
+          <option value="M鶴瀬東">M鶴瀬東</option>
+          <option value="Mふじみ野西口">Mふじみ野西口</option>
+          <option value="M新河岸">M新河岸</option>
+          <option value="M志木">M志木</option>
+          <option value="M朝霞台">M朝霞台</option>
+          <option value="M鶴瀬西">M鶴瀬西</option>
+          <option value="M三芳藤久保">M三芳藤久保</option>
+          <option value="ルーチェみずほ台">ルーチェみずほ台</option>
+        </select>
+      </div>
 <button class="btn-login" onclick="doRegister()">登録してはじめる →</button>
       <div class="login-msg" id="registerMsg"></div>
     </div>
@@ -570,12 +596,14 @@ async function doRegister() {
   const { auth, db, CLASS_CODE, TEACHER_USERNAME, TEACHER_PASSWORD, toEmail, createUserWithEmailAndPassword, doc, setDoc } = fb();
   const name    = document.getElementById('regName').value.trim();
   const display = document.getElementById('regDisplay').value.trim();
+  const school  = document.getElementById('regSchool').value;
   const pass    = document.getElementById('regPass').value;
   const msg     = document.getElementById('registerMsg');
 
   if (!name)           return setMsg(msg,'error','ユーザー名を入力してください');
   if (!/^[a-zA-Z0-9_]+$/.test(name)) return setMsg(msg,'error','ユーザー名は半角英数字・アンダースコアのみ使えます');
   if (!display)        return setMsg(msg,'error','表示名を入力してください');
+  if (!school)         return setMsg(msg,'error','所属校舎を選択してください');
   if (pass.length < 6) return setMsg(msg,'error','パスワードは6文字以上にしてください');
 
   setMsg(msg,'success','登録中…');
@@ -583,8 +611,8 @@ async function doRegister() {
   const role  = (name === TEACHER_USERNAME) ? 'teacher' : 'student';
   try {
     const cred = await createUserWithEmailAndPassword(auth, email, pass);
-    await setDoc(doc(db,'users',cred.user.uid), { username:name, display, role, createdAt: Date.now() });
-    window.__currentUser = { uid: cred.user.uid, username:name, display, role };
+    await setDoc(doc(db,'users',cred.user.uid), { username:name, display, school, role, createdAt: Date.now() });
+    window.__currentUser = { uid: cred.user.uid, username:name, display, school, role };
     setMsg(msg,'success','登録完了！');
   } catch(e) {
     const map = { 'auth/email-already-in-use':'そのユーザー名はすでに使われています' };
